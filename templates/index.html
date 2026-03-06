@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoGrader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div>
+        <div class="logo">AUTO<span>GRADER</span></div>
+        <div class="tagline">AI-Powered Assignment Evaluation</div>
+      </div>
+      <div class="tagline">v1.0</div>
+    </header>
+
+    <!-- API KEY -->
+    <div class="api-key-row">
+      <label class="api-label" for="apiKey">🔑 Anthropic API Key</label>
+      <input
+        type="password"
+        id="apiKey"
+        class="api-input"
+        placeholder="sk-ant-..."
+        autocomplete="off"
+      />
+      <span class="api-hint">Never stored — used only for this session</span>
+    </div>
+
+    <!-- UPLOAD GRID -->
+    <div class="grid">
+
+      <!-- Rubric -->
+      <div class="upload-zone" id="rubricZone">
+        <input type="file" id="rubricInput" accept=".pdf,.txt,.md,.py,.js,.java,.html,.css,.json,.csv" />
+        <div class="zone-label">📋 Rubric</div>
+        <div class="zone-hint" id="rubricHint">
+          Drop rubric file here<br/>or click to browse<br/><br/>.pdf · .txt · .md · and more
+        </div>
+        <div class="file-pill hidden" id="rubricPill">
+          <span id="rubricName"></span>
+          <button id="rubricRemove">✕</button>
+        </div>
+      </div>
+
+      <!-- Student Work -->
+      <div class="upload-zone" id="workZone">
+        <input type="file" id="workInput" multiple accept=".pdf,.txt,.md,.py,.js,.java,.html,.css,.json,.csv" />
+        <div class="zone-label">📄 Student Work</div>
+        <div id="workEmpty" class="zone-hint">
+          Drop one or more files<br/>or click to browse<br/><br/>.pdf · .py · .js · .java · .txt · etc.
+        </div>
+        <div id="workList" class="work-files hidden"></div>
+        <button class="add-more-btn hidden" id="addMoreBtn">
+          <input type="file" id="addMoreInput" multiple accept=".pdf,.txt,.md,.py,.js,.java,.html,.css,.json,.csv" />
+          + Add more files
+        </button>
+      </div>
+
+    </div>
+
+    <!-- GRADE BUTTON -->
+    <button class="grade-btn" id="gradeBtn" disabled>GRADE SUBMISSION</button>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar hidden" id="statusBar">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText"></span>
+    </div>
+
+    <!-- ERROR -->
+    <div class="error-box hidden" id="errorBox"></div>
+
+    <!-- LOADING -->
+    <div class="results hidden" id="loadingBox">
+      <div class="loading-text">
+        ◌ Reading rubric<br />
+        ◌ Evaluating student work<br />
+        ◌ Generating feedback...
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results hidden" id="resultsBox">
+      <div class="results-header">
+        <div class="results-title">Evaluation Report</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span id="letterGrade" style="color:#555;font-size:12px;font-family:'Space Mono',monospace;"></span>
+          <span class="score-badge" id="scoreDisplay"></span>
+        </div>
+      </div>
+      <div class="results-body">
+        <div class="section" id="criteriaSection">
+          <div class="section-title">Rubric Breakdown</div>
+          <div id="criteriaList"></div>
+        </div>
+        <div class="section" id="strengthsSection">
+          <div class="section-title">Strengths</div>
+          <p class="summary-text" id="strengthsText"></p>
+        </div>
+        <div class="section" id="improvementsSection">
+          <div class="section-title">Areas for Improvement</div>
+          <p class="summary-text" id="improvementsText"></p>
+        </div>
+        <div class="section" id="summarySection">
+          <div class="section-title">Summary</div>
+          <p class="summary-text" id="summaryText"></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
