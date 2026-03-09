@@ -9,7 +9,8 @@ app = Flask(__name__)
 CORS(app)
 app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB upload limit
 
-ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 
 def extract_text(filename: str, file_bytes: bytes) -> str:
@@ -31,7 +32,6 @@ def extract_text(filename: str, file_bytes: bytes) -> str:
             )
         return result
 
-    # Plain text fallback — try common encodings
     for encoding in ("utf-8", "latin-1", "cp1252"):
         try:
             return file_bytes.decode(encoding)
@@ -47,12 +47,9 @@ def index():
 
 @app.route("/grade", methods=["POST"])
 def grade():
-    # Files arrive as multipart/form-data
-    api_key = request.form.get("api_key", "").strip()
-    if not api_key:
-        return jsonify({"error": "No API key provided."}), 400
+    if not GROQ_API_KEY:
+        return jsonify({"error": "Server is missing GROQ_API_KEY environment variable."}), 500
 
-    # --- Rubric ---
     rubric_file = request.files.get("rubric")
     if not rubric_file:
         return jsonify({"error": "No rubric file provided."}), 400
@@ -61,7 +58,6 @@ def grade():
     except ValueError as e:
         return jsonify({"error": str(e)}), 422
 
-    # --- Student work files ---
     work_uploads = request.files.getlist("work_files")
     if not work_uploads:
         return jsonify({"error": "No student work files provided."}), 400
@@ -76,7 +72,6 @@ def grade():
 
     work_block = "\n\n".join(work_blocks)
 
-    # --- Build prompt ---
     prompt = f"""You are an expert autograder. Grade the student's work based on the rubric provided.
 
 RUBRIC:
@@ -105,31 +100,28 @@ Respond ONLY with a JSON object in this exact format (no markdown, no backticks)
 
     headers = {
         "Content-Type": "application/json",
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
+        "Authorization": f"Bearer {GROQ_API_KEY}",
     }
 
     payload = {
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": 1500,
+        "model": "llama3-70b-8192",
         "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1500,
+        "temperature": 0.2,
     }
 
     try:
-        resp = requests.post(ANTHROPIC_API_URL, json=payload,
-                             headers=headers, timeout=60)
+        resp = requests.post(GROQ_API_URL, json=payload, headers=headers, timeout=60)
         resp.raise_for_status()
         result = resp.json()
-        text = "".join(
-            block.get("text", "") for block in result.get("content", [])
-        )
+        text = result["choices"][0]["message"]["content"]
         return jsonify({"result": text})
     except requests.exceptions.HTTPError as e:
         return jsonify({
-            "error": f"Anthropic API error: {e.response.status_code} — {e.response.text}"
+            "error": f"Groq API error: {e.response.status_code} — {e.response.text}"
         }), 502
     except requests.exceptions.Timeout:
-        return jsonify({"error": "Request to Anthropic timed out."}), 504
+        return jsonify({"error": "Request to Groq timed out."}), 504
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
